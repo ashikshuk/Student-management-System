@@ -14,9 +14,7 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /**
-     * 1. Handles Request Validation Errors (e.g., @NotBlank, @Min, @Positive)
-     */
+   
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, String> errors = new HashMap<>();
@@ -30,21 +28,19 @@ public class GlobalExceptionHandler {
         ApiResponse<Map<String, String>> response = ApiResponse.success(
                 HttpStatus.BAD_REQUEST.value(),
                 "Validation failed",
-                errors // Nested validation map inside the data block
+                errors 
         );
 
         return ResponseEntity.badRequest().body(response);
     }
 
-    /**
-     * 2. Handles Database Unique Constraint Violations
-     */
+  
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolation(DataIntegrityViolationException ex) {
         String rootMsg = ex.getRootCause() != null ? ex.getRootCause().getMessage() : ex.getMessage();
         String message = "A record with this unique value already exists.";
 
-        // Optional: Parse the database message to make it friendlier
+        
         if (rootMsg != null && rootMsg.toLowerCase().contains("email")) {
             message = "This email address is already registered.";
         } else if (rootMsg != null && rootMsg.toLowerCase().contains("username")) {
@@ -59,9 +55,7 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
-    /**
-     * 3. Fallback for any other unexpected Runtime Exceptions (prevents leaking raw stack traces)
-     */
+   
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGeneralException(Exception ex) {
         ApiResponse<Void> response = ApiResponse.error(
