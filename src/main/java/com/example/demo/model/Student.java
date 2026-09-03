@@ -19,6 +19,7 @@ public class Student {
 
     @Column(unique = true, nullable = false)
     @Email(message = "Email format is not valid.")
+    @NotBlank(message = "Email cannot be blank")
     private String email;
 
     private String course;

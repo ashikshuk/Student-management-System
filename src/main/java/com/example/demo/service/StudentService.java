@@ -24,6 +24,10 @@ public class StudentService {
     }
 
     public Student addStudent(Student student) {
+        if (repository.findByEmail(student.getEmail()).isPresent()) {
+            throw new IllegalArgumentException("Email is already present.");
+        }
+
         return repository.save(student);
     }
 

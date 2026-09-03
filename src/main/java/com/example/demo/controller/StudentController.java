@@ -3,7 +3,7 @@ package com.example.demo.controller;
 import com.example.demo.dao.StudentDao;
 import com.example.demo.model.Student;
 import com.example.demo.service.StudentService;
-import com.example.demo.utils.ApiResponse;
+import com.example.demo.dao.ApiResponse;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,19 +17,22 @@ import java.util.List;
 public class StudentController {
 
     @Autowired
-    private StudentService service;
+    private StudentService studentService;
 
     @PostMapping
     public ResponseEntity<ApiResponse<?>> addStudent(@Valid @RequestBody Student student) {
-        Student savedStudent = service.addStudent(student);
-        ApiResponse apiResponse = ApiResponse.success(HttpStatus.CREATED.value(), "Student's data created successfully.", savedStudent);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(apiResponse);
+        Student savedStudent = studentService.addStudent(student);
+        ApiResponse<Student> apiResponse = ApiResponse.success(
+                HttpStatus.CREATED.value(),
+                "Student's data created successfully.",
+                savedStudent
+        );
+        return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<Student>>> getAllStudents() {
-        List<Student> students = service.getAllStudents();
+        List<Student> students = studentService.getAllStudents();
         String message = students.isEmpty() ? "No student found in the database.": "Students retrieved successfully.";
         ApiResponse<List<Student>> apiResponse = ApiResponse.success(
                 HttpStatus.OK.value(),
@@ -43,7 +46,7 @@ public class StudentController {
 
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<Student>> getStudentById(@PathVariable Long id) {
-        return service.getStudentById(id)
+        return studentService.getStudentById(id)
                 .map(student -> {
                     ApiResponse<Student> apiResponse = ApiResponse.success(
                             HttpStatus.OK.value(),
@@ -65,7 +68,7 @@ public class StudentController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<Student>> updateStudent(@PathVariable Long id, @RequestBody StudentDao studentDetails) {
-        Student updatedStudent = service.updateStudent(id, studentDetails);
+        Student updatedStudent = studentService.updateStudent(id, studentDetails);
 
         if (updatedStudent != null) {
             ApiResponse<Student> apiResponse = ApiResponse.success(
@@ -85,7 +88,7 @@ public class StudentController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteStudent(@PathVariable Long id) {
-        if (service.deleteStudent(id)) {
+        if (studentService.deleteStudent(id)) {
             ApiResponse<Void> apiResponse = ApiResponse.success(
                     HttpStatus.OK.value(),
                     "Student deleted successfully.",

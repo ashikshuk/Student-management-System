@@ -1,19 +1,18 @@
-package com.example.demo.utils;
+package com.example.demo.dao;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.http.HttpStatus;
 
 @Data
 @Builder
-@JsonInclude(JsonInclude.Include.NON_NULL) 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ApiResponse<T> {
 
-    private Integer status;     
-    private String message;    
-    private T data;           
+    private Integer status;
+    private String message;
+    private T data;
 
-  
+
     public static <T> ApiResponse<T> success(Integer status, String message, T data) {
         return ApiResponse.<T>builder()
                 .status(status)
@@ -22,7 +21,7 @@ public class ApiResponse<T> {
                 .build();
     }
 
-   
+    // Quick helper for error responses
     public static <T> ApiResponse<T> error(Integer status, String message) {
         return ApiResponse.<T>builder()
                 .status(status)
