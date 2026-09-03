@@ -1,9 +1,10 @@
 package com.example.demo.controller;
 
-import com.example.demo.dao.StudentDao;
+import com.example.demo.dto.StudentDto;
 import com.example.demo.model.Student;
 import com.example.demo.service.StudentService;
-import com.example.demo.dao.ApiResponse;
+import com.example.demo.dto.ApiResponse;
+import com.example.demo.utils.Mapper;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/students")
@@ -20,12 +23,14 @@ public class StudentController {
     private StudentService studentService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<?>> addStudent(@Valid @RequestBody Student student) {
-        Student savedStudent = studentService.addStudent(student);
-        ApiResponse<Student> apiResponse = ApiResponse.success(
+    public ResponseEntity<ApiResponse<?>> addStudent(@Valid @RequestBody StudentDto studentDto) {
+        Student studentEntity = Mapper.toEntity(studentDto);
+        Student savedStudent = studentService.addStudent(studentEntity);
+        StudentDto responseDto = Mapper.toDto(savedStudent);
+        ApiResponse<StudentDto> apiResponse = ApiResponse.success(
                 HttpStatus.CREATED.value(),
                 "Student's data created successfully.",
-                savedStudent
+                responseDto
         );
         return new ResponseEntity<>(apiResponse, HttpStatus.CREATED);
     }
@@ -33,30 +38,31 @@ public class StudentController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<Student>>> getAllStudents() {
         List<Student> students = studentService.getAllStudents();
-        String message = students.isEmpty() ? "No student found in the database.": "Students retrieved successfully.";
+
+        String message = students.isEmpty() ? "No student found in the database." : "Students retrieved successfully.";
         ApiResponse<List<Student>> apiResponse = ApiResponse.success(
                 HttpStatus.OK.value(),
                 message,
                 students
         );
-
         return ResponseEntity.ok(apiResponse);
     }
 
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<Student>> getStudentById(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<StudentDto>> getStudentById(@PathVariable Long id) {
         return studentService.getStudentById(id)
-                .map(student -> {
-                    ApiResponse<Student> apiResponse = ApiResponse.success(
+                .map(Mapper::toDto) // Convert Entity to DTO if found
+                .map(dto -> {
+                    ApiResponse<StudentDto> apiResponse = ApiResponse.success(
                             HttpStatus.OK.value(),
                             "Student details retrieved successfully.",
-                            student
+                            dto
                     );
                     return ResponseEntity.ok(apiResponse);
                 })
                 .orElseGet(() -> {
-                    ApiResponse<Student> apiResponse = ApiResponse.error(
+                    ApiResponse<StudentDto> apiResponse = ApiResponse.error(
                             HttpStatus.NOT_FOUND.value(),
                             "Student not found with ID: " + id
                     );
@@ -67,25 +73,31 @@ public class StudentController {
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Student>> updateStudent(@PathVariable Long id, @RequestBody StudentDao studentDetails) {
-        Student updatedStudent = studentService.updateStudent(id, studentDetails);
+    public ResponseEntity<ApiResponse<StudentDto>> updateStudentCourse(
+            @PathVariable Long id,
+            @RequestBody Map<String, String> requestBody) {
+
+        // Extract the "course" field safely from the JSON request body
+        String newCourse = requestBody.get("course");
+
+        Student updatedStudent = studentService.updateStudentCourse(id, newCourse);
 
         if (updatedStudent != null) {
-            ApiResponse<Student> apiResponse = ApiResponse.success(
+            StudentDto responseDto = Mapper.toDto(updatedStudent);
+            ApiResponse<StudentDto> apiResponse = ApiResponse.success(
                     HttpStatus.OK.value(),
-                    "Student's data updated successfully.",
-                    updatedStudent
+                    "Student's course updated successfully.",
+                    responseDto
             );
             return ResponseEntity.ok(apiResponse);
         }
 
-        ApiResponse<Student> apiResponse = ApiResponse.error(
+        ApiResponse<StudentDto> apiResponse = ApiResponse.error(
                 HttpStatus.NOT_FOUND.value(),
                 "Student not found with ID: " + id
         );
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(apiResponse);
     }
-
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteStudent(@PathVariable Long id) {
         if (studentService.deleteStudent(id)) {

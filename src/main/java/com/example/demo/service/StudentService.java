@@ -1,6 +1,6 @@
 package com.example.demo.service;
 
-import com.example.demo.dao.StudentDao;
+import com.example.demo.dto.StudentDto;
 import com.example.demo.model.Student;
 import com.example.demo.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,11 +31,13 @@ public class StudentService {
         return repository.save(student);
     }
 
-    public Student updateStudent(Long id, StudentDao updatedDetails) {
-        return repository.findById(id).map(student -> {
-            student.setCourse(updatedDetails.getCourse());
-            return repository.save(student);
-        }).orElse(null);
+    public Student updateStudentCourse(Long id, String newCourse) {
+        return repository.findById(id)
+                .map(existingStudent -> {
+                    existingStudent.setCourse(newCourse); // Update ONLY the course field
+                    return repository.save(existingStudent);
+                })
+                .orElse(null); // Returns null if the student ID doesn't exist
     }
 
     public boolean deleteStudent(Long id) {
